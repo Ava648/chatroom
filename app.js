@@ -63,7 +63,7 @@ window.login = async function () {
 
         document.getElementById("welcomeText").innerText =
             "歡迎 " + user;
-
+        document.getElementById("messages").innerHTML = "";
         document.getElementById("msg").value = "";
 
         document.getElementById("loginPage").style.display = "none";
