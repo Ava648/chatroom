@@ -25,6 +25,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 window.currentUser = null;
+let loginTime = null;
 
 /* 登入 */
 window.login = async function () {
@@ -60,6 +61,7 @@ window.login = async function () {
         }
 
         window.currentUser = user;
+        loginTime = new Date();
 
         document.getElementById("welcomeText").innerText =
             "歡迎 " + user;
@@ -137,6 +139,13 @@ onSnapshot(q, (snapshot) => {
     snapshot.forEach((doc) => {
 
         const data = doc.data();
+        if(
+            loginTime &&
+            data.time &&
+            data.time.toDate() < loginTime
+        ){
+            return;
+        }
 
         html += `
             <div class="message">
