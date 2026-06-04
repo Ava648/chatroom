@@ -8,7 +8,9 @@ import {
     query,
     orderBy,
     onSnapshot,
-    serverTimestamp
+    serverTimestamp,
+    doc,
+    getDoc
 }
 from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
@@ -25,41 +27,68 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-/* 房間密碼 */
-const ROOM_PASSWORD = "123456";
-
 /* 登入 */
-window.login = function(){
+window.login = async function(){
 
     const user =
         document.getElementById("user").value.trim();
 
-    const password =
-        document.getElementById("password").value;
+    const inviteCode =
+        document.getElementById("inviteCode").value.trim();
 
     if(user === ""){
         alert("請輸入暱稱");
         return;
     }
 
-    if(password !== ROOM_PASSWORD){
-        alert("房間密碼錯誤");
+    if(inviteCode === ""){
+        alert("請輸入邀請碼");
         return;
     }
 
-    localStorage.setItem(
-        "chatUser",
-        user
-    );
+    try{
 
-    document.getElementById("welcomeText")
-        .innerText = `歡迎 ${user}`;
+        const roomRef =
+            doc(db,"rooms","general");
 
-    document.getElementById("loginPage")
-        .style.display = "none";
+        const roomSnap =
+            await getDoc(roomRef);
 
-    document.getElementById("chatPage")
-        .style.display = "block";
+        if(!roomSnap.exists()){
+
+            alert("聊天室不存在");
+            return;
+        }
+
+        const roomData =
+            roomSnap.data();
+
+        if(inviteCode !== roomData.inviteCode){
+
+            alert("邀請碼錯誤");
+            return;
+        }
+
+        localStorage.setItem(
+            "chatUser",
+            user
+        );
+
+        document.getElementById("welcomeText")
+            .innerText = `歡迎 ${user}`;
+
+        document.getElementById("loginPage")
+            .style.display = "none";
+
+        document.getElementById("chatPage")
+            .style.display = "block";
+
+    }catch(error){
+
+        console.error(error);
+
+        alert("登入失敗");
+    }
 };
 
 /* 發送訊息 */
