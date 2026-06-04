@@ -2,203 +2,198 @@ import { initializeApp }
 from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
 
 import {
-    getFirestore,
-    collection,
-    addDoc,
-    query,
-    orderBy,
-    onSnapshot,
-    serverTimestamp,
-    doc,
-    getDoc
+getFirestore,
+collection,
+addDoc,
+query,
+orderBy,
+onSnapshot,
+serverTimestamp,
+doc,
+getDoc
 }
 from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
 /* Firebase設定 */
 const firebaseConfig = {
-    apiKey: "AIzaSyBfxcYcYZifyoR9pVQqpoogNMkLAwpWKmE",
-    authDomain: "chatroom-e43a7.firebaseapp.com",
-    projectId: "chatroom-e43a7",
-    storageBucket: "chatroom-e43a7.firebasestorage.app",
-    messagingSenderId: "1062357861624",
-    appId: "1:1062357861624:web:fde8e703ceda1a3201270d"
+apiKey: "AIzaSyBfxcYcYZifyoR9pVQqpoogNMkLAwpWKmE",
+authDomain: "chatroom-e43a7.firebaseapp.com",
+projectId: "chatroom-e43a7",
+storageBucket: "chatroom-e43a7.firebasestorage.app",
+messagingSenderId: "1062357861624",
+appId: "1:1062357861624:web:fde8e703ceda1a3201270d"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+/* 目前登入使用者 */
+window.currentUser = null;
+
 /* 登入 */
 window.login = async function(){
 
-    const user =
-        document.getElementById("user").value.trim();
+```
+const user =
+    document.getElementById("user").value.trim();
 
-    const inviteCode =
-        document.getElementById("inviteCode").value.trim();
+const inviteCode =
+    document.getElementById("inviteCode").value.trim();
 
-    if(user === ""){
-        alert("請輸入暱稱");
+if(user === ""){
+    alert("請輸入暱稱");
+    return;
+}
+
+if(inviteCode === ""){
+    alert("請輸入邀請碼");
+    return;
+}
+
+try{
+
+    const roomRef =
+        doc(db,"rooms","general");
+
+    const roomSnap =
+        await getDoc(roomRef);
+
+    if(!roomSnap.exists()){
+
+        alert("聊天室不存在");
         return;
     }
 
-    if(inviteCode === ""){
-        alert("請輸入邀請碼");
+    const roomData =
+        roomSnap.data();
+
+    if(inviteCode !== roomData.inviteCode){
+
+        alert("邀請碼錯誤");
         return;
     }
 
-    try{
+    window.currentUser = user;
 
-        const roomRef =
-            doc(db,"rooms","general");
+    document.getElementById("welcomeText")
+        .innerText = `歡迎 ${user}`;
 
-        const roomSnap =
-            await getDoc(roomRef);
+    document.getElementById("msg").value = "";
 
-        if(!roomSnap.exists()){
+    document.getElementById("loginPage")
+        .style.display = "none";
 
-            alert("聊天室不存在");
-            return;
-        }
+    document.getElementById("chatPage")
+        .style.display = "block";
 
-        const roomData =
-            roomSnap.data();
+}catch(error){
 
-        if(inviteCode !== roomData.inviteCode){
+    console.error(error);
 
-            alert("邀請碼錯誤");
-            return;
-        }
+    alert("登入失敗");
+}
+```
 
-        localStorage.setItem(
-            "chatUser",
-            user
-        );
-
-        document.getElementById("welcomeText")
-            .innerText = `歡迎 ${user}`;
-
-        document.getElementById("loginPage")
-            .style.display = "none";
-
-        document.getElementById("chatPage")
-            .style.display = "block";
-
-    }catch(error){
-
-        console.error(error);
-
-        alert("登入失敗");
-    }
 };
 
 /* 發送訊息 */
 window.sendMessage = async function(){
 
-    const user =
-        localStorage.getItem("chatUser");
+```
+const user = window.currentUser;
 
-    const msg =
-        document.getElementById("msg")
-        .value
-        .trim();
+if(!user){
+    alert("請重新登入");
+    return;
+}
 
-    if(msg === ""){
-        return;
-    }
+const msg =
+    document.getElementById("msg")
+    .value
+    .trim();
 
-    try{
+if(msg === ""){
+    return;
+}
 
-        await addDoc(
-            collection(db,"messages"),
-            {
-                user: user,
-                message: msg,
-                time: serverTimestamp()
-            }
-        );
+try{
 
-        document.getElementById("msg").value = "";
+    await addDoc(
+        collection(db,"messages"),
+        {
+            user: user,
+            message: msg,
+            time: serverTimestamp()
+        }
+    );
 
-    }catch(error){
+    document.getElementById("msg").value = "";
 
-        console.error(error);
+}catch(error){
 
-        alert("訊息送出失敗");
-    }
+    console.error(error);
+
+    alert("訊息送出失敗");
+}
+```
+
 };
 
 /* Enter送出訊息 */
 document.addEventListener(
-    "keydown",
-    function(event){
+"keydown",
+function(event){
 
-        if(
-            event.key === "Enter" &&
-            document.getElementById("chatPage").style.display !== "none"
-        ){
-            sendMessage();
-        }
-
+```
+    if(
+        event.key === "Enter" &&
+        document.getElementById("chatPage").style.display !== "none"
+    ){
+        sendMessage();
     }
+
+}
+```
+
 );
 
 /* 即時監聽聊天室 */
 const q = query(
-    collection(db,"messages"),
-    orderBy("time")
+collection(db,"messages"),
+orderBy("time")
 );
 
 onSnapshot(q,(snapshot)=>{
 
-    let html = "";
+```
+let html = "";
 
-    snapshot.forEach((doc)=>{
+snapshot.forEach((doc)=>{
 
-        const data = doc.data();
+    const data = doc.data();
 
-        html += `
-            <div class="message">
-                <div class="message-user">
-                    ${data.user || "匿名"}
-                </div>
-                <div>
-                    ${data.message || ""}
-                </div>
+    html += `
+        <div class="message">
+            <div class="message-user">
+                ${data.user || "匿名"}
             </div>
-        `;
-    });
-
-    document.getElementById("messages")
-        .innerHTML = html;
-
-    const messagesDiv =
-        document.getElementById("messages");
-
-    messagesDiv.scrollTop =
-        messagesDiv.scrollHeight;
+            <div>
+                ${data.message || ""}
+            </div>
+        </div>
+    `;
 });
 
-/* 自動登入 */
-window.addEventListener(
-    "load",
-    function(){
+document.getElementById("messages")
+    .innerHTML = html;
 
-        const user =
-            localStorage.getItem("chatUser");
+const messagesDiv =
+    document.getElementById("messages");
 
-        if(user){
+messagesDiv.scrollTop =
+    messagesDiv.scrollHeight;
+```
 
-            document.getElementById("welcomeText")
-                .innerText = `歡迎 ${user}`;
-
-            document.getElementById("loginPage")
-                .style.display = "none";
-
-            document.getElementById("chatPage")
-                .style.display = "block";
-        }
-
-    }
-);
+});
 
 console.log("ChatRoom Started");
